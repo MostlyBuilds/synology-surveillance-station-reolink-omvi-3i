@@ -1,0 +1,32 @@
+name: Publish installer release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Verify generated installer is current
+        run: |
+          cp install-omvi-profile.sh "$RUNNER_TEMP/install-omvi-profile.sh"
+          sh scripts/build-installer.sh
+          diff -u "$RUNNER_TEMP/install-omvi-profile.sh" install-omvi-profile.sh
+
+      - name: Check shell syntax
+        run: |
+          bash -n install-omvi-profile.sh
+          sh -n scripts/build-installer.sh
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" install-omvi-profile.sh --generate-notes --verify-tag

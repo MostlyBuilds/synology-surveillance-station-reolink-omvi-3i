@@ -1,0 +1,29 @@
+name: Verify generated installer
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Save committed installer
+        run: cp install-omvi-profile.sh "$RUNNER_TEMP/install-omvi-profile.sh"
+
+      - name: Rebuild installer
+        run: sh scripts/build-installer.sh
+
+      - name: Check shell syntax
+        run: |
+          bash -n install-omvi-profile.sh
+          sh -n scripts/build-installer.sh
+
+      - name: Verify generated installer is current
+        run: diff -u "$RUNNER_TEMP/install-omvi-profile.sh" install-omvi-profile.sh
